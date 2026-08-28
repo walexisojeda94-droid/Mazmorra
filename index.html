@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mazmorra Retro</title>
+<style>
+  :root {
+    --surface-0: #ffffff;
+    --surface-1: #f4f4f0;
+    --surface-2: #e8e6df;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --text-muted: #888888;
+    --border: #cccccc;
+    --radius: 8px;
+    --fill-danger: #d93838;
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  body {
+    background-color: #121212;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .game-container {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface-0);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+  }
+  .header-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .stat-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .canvas-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-0);
+  }
+  .panels-row {
+    display: flex;
+    gap: 8px;
+  }
+  .panel {
+    flex: 1;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    font-size: 11px;
+    max-height: 110px;
+    overflow-y: auto;
+  }
+  .panel-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  /* Controles Retro Estilo Consola */
+  .retro-controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+  }
+  .dpad {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  .dpad button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: var(--surface-0);
+    border: 2px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpad button:active {
+    background: var(--surface-2);
+  }
+  #btn-up { top: 0; left: 40px; }
+  #btn-left { top: 40px; left: 0; }
+  #btn-right { top: 40px; left: 80px; }
+  #btn-down { top: 80px; left: 40px; }
+  .dpad-center {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    width: 40px;
+    height: 40px;
+    background: var(--surface-2);
+    border-radius: 4px;
+  }
+  .action-btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  #btn-action-a {
+    width: 65px;
+    height: 65px;
+    background: #185FA5;
+    border: 3px solid #B5D4F4;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #btn-action-a:active {
+    transform: scale(0.95);
+  }
+  #log {
+    font-size: 11px;
+    color: var(--text-secondary);
+    height: 28px;
+    overflow: hidden;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .overlay-screen {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    border-radius: var(--radius);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 1rem;
+    z-index: 10;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="header-stats">
+    <span style="font-size:15px; font-weight:800;">Mazmorra</span>
+    <div class="stat-group">
+      <span>Piso <b id="floor-out">1</b></span>
+      <span>HP <b id="hp-stat-out">10/10</b></span>
+      <span>ATK <b id="atk-out">2</b></span>
+      <span>Oro <b id="gold-out">0</b></span>
+    </div>
+    <button id="btn-restart" style="font-size:11px; padding:4px 8px; cursor:pointer; border:1px solid #555; border-radius:4px; background:var(--surface-0); font-weight:600;">Reiniciar</button>
+  </div>
+
+  <!-- Barra de Vida -->
+  <div style="display:flex; gap:6px; align-items:center;">
+    <div style="flex:1; height:8px; background:var(--surface-1); border-radius:4px; overflow:hidden; border:1px solid var(--border);">
+      <div id="hp-bar" style="height:100%; width:100%; background:var(--fill-danger); transition:width 0.15s;"></div>
+    </div>
+  </div>
+
+  <!-- Canvas del Juego -->
+  <div class="canvas-wrapper">
+    <canvas id="game-canvas" tabindex="0"></canvas>
+    
+    <!-- Overlay Derrota -->
+    <div id="overlay" class="overlay-screen">
+      <p id="overlay-title" style="font-size:18px; font-weight:bold; margin:0;"></p>
+      <p id="overlay-sub" style="font-size:12px; color:#aaa; margin:0;"></p>
+      <button id="overlay-btn" style="margin-top:6px; padding:6px 14px; cursor:pointer; background:#fff; border:none; border-radius:4px; font-weight:bold;">Reintentar</button>
+    </div>
+
+    <!-- Overlay Tienda -->
+    <div id="shop-overlay" class="overlay-screen" style="background:rgba(10,10,10,0.95);">
+      <p style="font-size:15px; font-weight:bold; margin:0; color:#FAC775;">🏪 Tienda del Mercader</p>
+      <p style="font-size:10px; color:#ccc; margin:0;">Usa la cruceta para moverte y el botón <b>A</b> para comprar:</p>
+      <div id="shop-items" style="display:flex; flex-direction:column; gap:4px; width:100%; max-height:160px; overflow-y:auto; padding-right:2px; margin-top:4px;"></div>
+      <button id="shop-close-btn" style="margin-top:4px; font-size:11px; padding:6px 12px; background:#FAC775; color:#111; font-weight:bold; border:none; border-radius:4px;">Cerrar tienda</button>
+    </div>
+  </div>
+
+  <!-- Paneles Inferiores (Monstruos e Inventario) -->
+  <div class="panels-row">
+    <div class="panel">
+      <div class="panel-title">Monstruos</div>
+      <div id="enemies-list" style="display:flex; flex-direction:column; gap:3px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Inventario</div>
+      <div id="inventory" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- Controles Táctiles Estilo Consola Retro -->
+  <div class="retro-controls">
+    <div class="dpad">
+      <button id="btn-up">▲</button>
+      <button id="btn-left">◀</button>
+      <button id="btn-right">▶</button>
+      <button id="btn-down">▼</button>
+      <div class="dpad-center"></div>
+    </div>
+    <div class="action-btn-container">
+      <button id="btn-action-a">A</button>
+      <span style="font-size:10px; color:var(--text-secondary); font-weight:700;">ACEPTAR</span>
+    </div>
+  </div>
+
+  <div id="log"></div>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('game-canvas');
+  var ctx = canvas.getContext('2d');
+  var SIZE = 13;
+  var CELL = 0;
+  var DPR = Math.max(1, window.devicePixelRatio || 1);
+
+  function resizeCanvas(){
+    var w = canvas.clientWidth || 350;
+    canvas.width = w * DPR;
+    canvas.height = w * DPR;
+    CELL = canvas.width / SIZE;
+  }
+
+  var TILE = { WALL:0, FLOOR:1, STAIRS:2 };
+  var colors = {};
+  function refreshColors(){
+    colors.wall = '#111111';
+    colors.wallExplored = '#777777';
+    colors.floor = '#ffffff';
+    colors.border = '#d9d7cd';
+    colors.stairs = '#0F6E56';
+    colors.stairsBg = '#9FE1CB';
+    colors.player = '#185FA5';
+    colors.playerBg = '#B5D4F4';
+    colors.murcielago = '#533261';
+    colors.murcielagoBg = '#E5D4ED';
+    colors.esqueleto = '#791F1F';
+    colors.esqueletoBg = '#F7C1C1';
+    colors.golem = '#3d3d3d';
+    colors.golemBg = '#d1d1d1';
+    colors.mercader = '#7D4F50';
+    colors.mercaderBg = '#F2D6D7';
+    colors.espada = '#854F0B';
+    colors.espadaBg = '#FAC775';
+    colors.pocion = '#993556';
+    colors.pocionBg = '#F4C0D1';
+    colors.pocionMax = '#0F6E56';
+    colors.pocionMaxBg = '#C2E8DF';
+    colors.llave = '#BA7506';
+    colors.llaveBg = '#FEE8C8';
+    colors.cofre = '#633806';
+    colors.cofreBg = '#EED2B0';
+  }
+
+  var state;
+
+  function rngInt(n){ return Math.floor(Math.random()*n); }
+
+  function makeDungeon(floor){
+    var grid, rooms;
+    var valid = false;
+    var attempts = 0;
+
+    while (!valid && attempts < 50) {
+      attempts++;
+      grid = [];
+      for (var y=0; y<SIZE; y++){
+        var row = [];
+        for (var x=0; x<SIZE; x++) row.push(TILE.WALL);
+        grid.push(row);
+      }
+      rooms = [];
+      var roomCount = 5 + rngInt(3);
+      var rAttempts = 0;
+      while (rooms.length < roomCount && rAttempts < 100){
+        rAttempts++;
+        var rw = 3 + rngInt(2);
+        var rh = 3 + rngInt(2);
+        var rx = 1 + rngInt(SIZE - rw - 2);
+        var ry = 1 + rngInt(SIZE - rh - 2);
+        var overlaps = false;
+        for (var i=0; i<rooms.length; i++){
+          var r = rooms[i];
+          if (rx < r.x+r.w && rx+rw > r.x && ry < r.y+r.h && ry+rh > r.y){ overlaps = true; break; }
+        }
+        if (overlaps) continue;
+        rooms.push({x:rx, y:ry, w:rw, h:rh});
+        for (var yy=ry; yy<ry+rh; yy++)
+          for (var xx=rx; xx<rx+rw; xx++)
+            grid[yy][xx] = TILE.FLOOR;
+      }
+
+      if (rooms.length < 2) continue;
+
+      for (var i=1; i<rooms.length; i++){
+        var a = centerOf(rooms[i-1]);
+        var b = centerOf(rooms[i]);
+        carveCorridor(grid, a, b);
+      }
+
+      var start = centerOf(rooms[0]);
+      var visited = [];
+      for (var y=0; y<SIZE; y++){
+        var row = [];
+        for (var x=0; x<SIZE; x++) row.push(false);
+        visited.push(row);
+      }
+
+      var queue = [start];
+      visited[start.y][start.x] = true;
+      var reachableFloors = 0;
+      var totalFloors = 0;
+
+      for (var y=0; y<SIZE; y++)
+        for (var x=0; x<SIZE; x++)
+          if (grid[y][x] !== TILE.WALL) totalFloors++;
+
+      while (queue.length > 0){
+        var curr = queue.shift();
+        reachableFloors++;
+        var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
+        for (var d=0; d<dirs.length; d++){
+          var nx = curr.x + dirs[d].x;
+          var ny = curr.y + dirs[d].y;
+          if (nx >= 0 && ny >= 0 && nx < SIZE && ny < SIZE && grid[ny][nx] !== TILE.WALL && !visited[ny][nx]){
+            visited[ny][nx] = true;
+            queue.push({x:nx, y:ny});
+          }
+        }
+      }
+
+      if (reachableFloors >= totalFloors * 0.85) valid = true;
+    }
+    return { grid: grid, rooms: rooms };
+  }
+
+  function centerOf(r){ return { x: r.x + Math.floor(r.w/2), y: r.y + Math.floor(r.h/2) }; }
+
+  function carveCorridor(grid, a, b){
+    var x = a.x, y = a.y;
+    while (x !== b.x){
+      grid[y][x] = TILE.FLOOR;
+      x += (x < b.x) ? 1 : -1;
+    }
+    while (y !== b.y){
+      grid[y][x] = TILE.FLOOR;
+      y += (y < b.y) ? 1 : -1;
+    }
+    grid[y][x] = TILE.FLOOR;
+  }
+
+  function freeTile(grid, exclude){
+    var tries = 0;
+    while (tries < 500){
+      tries++;
+      var x = 1 + rngInt(SIZE-2);
+      var y = 1 + rngInt(SIZE-2);
+      if (grid[y][x] !== TILE.FLOOR) continue;
+      var clash = false;
+      for (var i=0; i<exclude.length; i++){
+        if (exclude[i].x === x && exclude[i].y === y){ clash = true; break; }
+      }
+      if (!clash) return {x:x, y:y};
+    }
+    return {x:1, y:1};
+  }
+
+  function calculateEnemyAtk(baseMin, baseMax, floor) {
+    var atk = baseMin + rngInt(baseMax - baseMin + 1);
+    var brackets = Math.floor((floor - 1) / 5);
+    for (var b = 0; b < brackets; b++) atk += (2 + rngInt(3));
+    return atk;
+  }
+
+  function newFloor(floor){
+    var d = makeDungeon(floor);
+    state.grid = d.grid;
+    
+    state.explored = [];
+    for (var y=0; y<SIZE; y++){
+      var row = [];
+      for (var x=0; x<SIZE; x++) row.push(false);
+      state.explored.push(row);
+    }
+
+    state.isDarkFloor = (floor > 2) && (Math.random() < 0.35);
+    if (state.isDarkFloor) pushLog('⚠️ ¡Piso de Oscuridad Absoluta!');
+
+    var occupied = [];
+    var playerPos = (state.player && state.player.x !== undefined && d.grid[state.player.y][state.player.x] !== TILE.WALL)
+      ? {x: state.player.x, y: state.player.y}
+      : freeTile(d.grid, []);
+    
+    occupied.push(playerPos);
+
+    var stairs = freeTile(d.grid, occupied);
+    occupied.push(stairs);
+    d.grid[stairs.y][stairs.x] = TILE.STAIRS;
+    state.stairs = stairs;
+
+    state.enemies = [];
+    state.merchant = null;
+
+    var isBossFloor = (floor % 5 === 0);
+    if (isBossFloor) {
+      var pos = freeTile(d.grid, occupied);
+      occupied.push(pos);
+      var bossHp = 10 + Math.floor(floor * 2);
+      var bossAtk = calculateEnemyAtk(8, 12, floor);
+      state.enemies.push({ x: pos.x, y: pos.y, hp: bossHp, maxHp: bossHp, atk: bossAtk, type: 'Golem de Piedra' });
+    } else {
+      var enemyCount = 3 + Math.min(4, floor);
+      for (var i=0; i<enemyCount; i++){
+        var pos = freeTile(d.grid, occupied);
+        occupied.push(pos);
+        var isEsqueleto = Math.random() < Math.min(0.20 + floor*0.05, 0.6);
+        var maxHp = isEsqueleto ? 4 + Math.floor(floor/2) : 2 + Math.floor(floor/3);
+        var enemyAtk = isEsqueleto ? calculateEnemyAtk(3, 5, floor) : calculateEnemyAtk(1, 3, floor);
+        state.enemies.push({ x: pos.x, y: pos.y, hp: maxHp, maxHp: maxHp, atk: enemyAtk, type: isEsqueleto ? 'Esqueleto' : 'Murciélago' });
+      }
+    }
+
+    state.items = [];
+    var chestCount = isBossFloor ? 3 : (1 + Math.floor(floor / 2));
+    var keyCount = Math.max(chestCount, 1 + rngInt(2));
+    for (var i=0; i<keyCount; i++){
+      var kp = freeTile(d.grid, occupied);
+      occupied.push(kp);
+      state.items.push({ x: kp.x, y: kp.y, type: 'llave', value: 1 });
+    }
+    for (var i=0; i<chestCount; i++){
+      var pos = freeTile(d.grid, occupied);
+      occupied.push(pos);
+      state.items.push({ x: pos.x, y: pos.y, type: 'cofre', value: 3 + floor });
+    }
+
+    var extraCount = 2 + rngInt(2);
+    for (var i=0; i<extraCount; i++){
+      var pos = freeTile(d.grid, occupied);
+      occupied.push(pos);
+      var randType = Math.random();
+      var itemType = randType < 0.45 ? 'pocion' : (randType < 0.75 ? 'pocionMax' : 'espada');
+      state.items.push({ x: pos.x, y: pos.y, type: itemType, value: 2 });
+    }
+
+    if (!state.player){
+      state.player = { x: playerPos.x, y: playerPos.y, hp: 10, maxHp: 10, atk: 2, llaves: 0, gold: 0, visionBonus: 0, shieldSteps: 0, inventory: [] };
+    } else {
+      state.player.x = playerPos.x;
+      state.player.y = playerPos.y;
+    }
+    state.floor = floor;
+    updateExplored();
+  }
+
+  function updateExplored(){
+    if (!state.player) return;
+    var p = state.player;
+    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
+    for (var y=0; y<SIZE; y++){
+      for (var x=0; x<SIZE; x++){
+        if (!state.isDarkFloor || Math.abs(x - p.x) + Math.abs(y - p.y) <= visionRange) {
+          state.explored[y][x] = true;
+        }
+      }
+    }
+  }
+
+  function resetGame(){
+    state = { floor:1, turn:0, player:null, grid:null, explored:[], enemies:[], merchant:null, items:[], stairs:null, over:false, shopOpen:false, isDarkFloor:false, log:[] };
+    newFloor(1);
+    pushLog('Entras a la mazmorra. ¡Suerte!');
+    render();
+  }
+
+  function pushLog(msg){
+    state.log.unshift(msg);
+    state.log = state.log.slice(0,2);
+    document.getElementById('log').textContent = state.log[0] || '';
+  }
+
+  function inBounds(x,y){ return x>=0 && y>=0 && x<SIZE && y<SIZE; }
+  function isWalkable(x,y){ return inBounds(x,y) && state.grid[y][x] !== TILE.WALL; }
+  
+  function enemyAt(x,y){
+    for (var i=0; i<state.enemies.length; i++){
+      var e = state.enemies[i];
+      if (e.x === x && e.y === y && e.hp > 0) return e;
+    }
+    return null;
+  }
+
+  function tryMove(dx,dy){
+    if (state.over || state.shopOpen) return;
+    var p = state.player;
+    var nx = p.x + dx, ny = p.y + dy;
+    if (!inBounds(nx,ny)) return;
+
+    if (state.merchant && state.merchant.x === nx && state.merchant.y === ny){
+      openShop();
+      return;
+    }
+
+    var target = enemyAt(nx,ny);
+    if (target){
+      target.hp -= p.atk;
+      if (target.hp <= 0){
+        target.hp = 0;
+        var goldDrop = target.type === 'Golem de Piedra' ? 5 : 1;
+        p.gold += goldDrop;
+        pushLog('¡Derrotaste un ' + target.type + ' (+' + goldDrop + ' oro)!');
+        
+        var allDead = true;
+        state.enemies.forEach(function(en){ if(en.hp > 0) allDead = false; });
+        if (allDead && state.floor % 5 === 0) spawnMerchant();
+      } else {
+        pushLog('Atacas al ' + target.type + ' (' + target.hp + '/' + target.maxHp + ' HP).');
+      }
+      updateExplored();
+      endTurn();
+      return;
+    }
+
+    if (!isWalkable(nx,ny)) return;
+
+    for (var i=0; i<state.items.length; i++){
+      var it = state.items[i];
+      if (it.x === nx && it.y === ny && it.type === 'cofre'){
+        if (p.llaves > 0){
+          p.llaves--;
+          state.items.splice(i,1);
+          p.hp = Math.min(p.maxHp, p.hp + it.value);
+          p.atk += 1;
+          p.gold += 5;
+          pushLog('¡Cofre abierto (+HP, +ATK, +Oro)!');
+          render();
+        } else {
+          pushLog('Necesitas una llave para abrir el cofre.');
+        }
+        return;
+      }
+    }
+
+    p.x = nx; p.y = ny;
+    updateExplored();
+
+    for (var i=0; i<state.items.length; i++){
+      var it = state.items[i];
+      if (it.x === nx && it.y === ny){
+        state.items.splice(i,1);
+        if (it.type === 'pocion'){ p.inventory.push({ type:'pocion', value: 2 }); pushLog('Recogiste Poción (+2 HP).'); }
+        else if (it.type === 'pocionMax'){ p.inventory.push({ type:'pocionMax', value: 2 }); pushLog('Recogiste Escudo de Vitalidad.'); }
+        else if (it.type === 'espada'){ p.inventory.push({ type:'espada', value: 2 }); pushLog('Recogiste Daga (+2 ATK).'); }
+        else if (it.type === 'llave'){ p.llaves++; pushLog('Recogiste una Llave.'); }
+        break;
+      }
+    }
+
+    if (nx === state.stairs.x && ny === state.stairs.y){
+      var nextFloor = state.floor + 1;
+      newFloor(nextFloor);
+      pushLog('Bajaste al piso ' + nextFloor + '.');
+      render();
+      return;
+    }
+
+    endTurn();
+  }
+
+  function spawnMerchant(){
+    var occupied = [{x: state.player.x, y: state.player.y}, {x: state.stairs.x, y: state.stairs.y}];
+    var mPos = freeTile(state.grid, occupied);
+    state.merchant = { x: mPos.x, y: mPos.y };
+    pushLog('¡Apareció un Mercader ambulante!');
+    render();
+  }
+
+  var selectedShopIndex = 0;
+  function getShopOptions(){
+    return [
+      { name: '🧪 Poción (+2 HP)', cost: 5, action: function(){ state.player.inventory.push({type:'pocion', value:2}); } },
+      { name: '🛡️ Escudo (+2 MaxHP)', cost: 10, action: function(){ state.player.inventory.push({type:'pocionMax', value:2}); } },
+      { name: '🗡️ Daga (+2 ATK)', cost: 8, action: function(){ state.player.inventory.push({type:'espada', value:2}); } },
+      { name: '📜 Pergamino de Visión', cost: 15, action: function(){ state.player.visionBonus += 1; updateExplored(); } }
+    ];
+  }
+
+  function openShop(){
+    state.shopOpen = true;
+    selectedShopIndex = 0;
+    renderShopList();
+    document.getElementById('shop-overlay').style.display = 'flex';
+  }
+
+  function renderShopList(){
+    var container = document.getElementById('shop-items');
+    container.innerHTML = '';
+    var options = getShopOptions();
+    options.forEach(function(opt, idx){
+      var isSelected = (idx === selectedShopIndex);
+      var btn = document.createElement('button');
+      btn.style.cssText = 'font-size:11px; padding:6px 8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-radius:4px; width:100%; border:' + (isSelected ? '2px solid #28A745; background:#14382B;' : '1px solid #444; background:#222;') + '; color:#fff;';
+      btn.innerHTML = '<span>' + opt.name + '</span><b style="color:#FAC775;">' + opt.cost + ' 🪙</b>';
+      btn.addEventListener('click', function(){ selectedShopIndex = idx; renderShopList(); buySelectedShopItem(); });
+      container.appendChild(btn);
+    });
+  }
+
+  function buySelectedShopItem(){
+    var options = getShopOptions();
+    var opt = options[selectedShopIndex];
+    if (state.player.gold >= opt.cost){
+      state.player.gold -= opt.cost;
+      opt.action();
+      pushLog('Compraste: ' + opt.name);
+      renderShopList();
+      render();
+    } else {
+      pushLog('No tienes suficiente oro.');
+    }
+  }
+
+  function closeShop(){
+    state.shopOpen = false;
+    document.getElementById('shop-overlay').style.display = 'none';
+  }
+
+  document.getElementById('shop-close-btn').addEventListener('click', function(){ closeShop(); render(); });
+
+  function endTurn(){
+    state.turn++;
+    var p = state.player;
+    state.enemies.forEach(function(e){
+      if (e.hp <= 0) return;
+      var dist = Math.abs(e.x-p.x) + Math.abs(e.y-p.y);
+      if (dist === 1){
+        p.hp -= e.atk;
+        pushLog('El ' + e.type + ' te golpeó (-' + e.atk + ' HP).');
+      } else if (dist <= 4){
+        var dx = p.x - e.x, dy = p.y - e.y;
+        var stepX = dx === 0 ? 0 : (dx > 0 ? 1 : -1);
+        var stepY = dy === 0 ? 0 : (dy > 0 ? 1 : -1);
+        var tx = Math.abs(dx) >= Math.abs(dy) ? e.x+stepX : e.x;
+        var ty = Math.abs(dx) >= Math.abs(dy) ? e.y : e.y+stepY;
+        if (isWalkable(tx,ty) && !enemyAt(tx,ty) && !(tx===p.x && ty===p.y)){ e.x = tx; e.y = ty; }
+      }
+    });
+
+    if (p.hp <= 0){
+      p.hp = 0;
+      state.over = true;
+      showOverlay('Game Over', 'Llegaste al piso ' + state.floor);
+    }
+    render();
+  }
+
+  function useItem(idx){
+    if (state.over || state.shopOpen) return;
+    var p = state.player;
+    var item = p.inventory[idx];
+    if (!item) return;
+
+    if (item.type === 'pocion'){
+      p.inventory.splice(idx,1);
+      p.hp = Math.min(p.maxHp, p.hp + item.value);
+      pushLog('Usaste Poción (+' + item.value + ' HP).');
+    } else if (item.type === 'pocionMax'){
+      p.inventory.splice(idx,1);
+      p.maxHp += item.value;
+      p.hp += item.value;
+      pushLog('Usaste Escudo de Vitalidad.');
+    } else if (item.type === 'espada'){
+      p.inventory.splice(idx,1);
+      p.atk += item.value;
+      pushLog('Equipaste Daga (+2 ATK).');
+    }
+    render();
+  }
+
+  function showOverlay(title, sub){
+    document.getElementById('overlay-title').textContent = title;
+    document.getElementById('overlay-sub').textContent = sub;
+    document.getElementById('overlay').style.display = 'flex';
+  }
+  function hideOverlay(){ document.getElementById('overlay').style.display = 'none'; }
+
+  function render(){
+    refreshColors();
+    document.getElementById('floor-out').textContent = state.floor;
+    document.getElementById('hp-stat-out').textContent = Math.max(0, state.player.hp) + '/' + state.player.maxHp;
+    document.getElementById('atk-out').textContent = state.player.atk;
+    document.getElementById('gold-out').textContent = state.player.gold;
+    
+    var p = state.player;
+    var pct = Math.max(0, Math.round((p.hp/p.maxHp)*100));
+    document.getElementById('hp-bar').style.width = pct + '%';
+
+    var enemiesListEl = document.getElementById('enemies-list');
+    enemiesListEl.innerHTML = '';
+    state.enemies.forEach(function(e){
+      if (e.hp <= 0) return;
+      var symbol = e.type === 'Golem de Piedra' ? '🗿' : (e.type === 'Esqueleto' ? '💀' : '🦇');
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--surface-0); padding:2px 4px; border-radius:3px; border:1px solid var(--border);';
+      row.innerHTML = '<span>' + symbol + ' ' + e.type.substring(0,6) + '</span><span>HP:' + e.hp + ' ATK:' + e.atk + '</span>';
+      enemiesListEl.appendChild(row);
+    });
+
+    var inv = document.getElementById('inventory');
+    inv.innerHTML = '';
+    if (p.llaves > 0){
+      var k = document.createElement('span');
+      k.style.cssText = 'font-size:10px; padding:3px 6px; background:var(--surface-0); border:1px solid #555; border-radius:3px;';
+      k.textContent = '🗝️ x' + p.llaves;
+      inv.appendChild(k);
+    }
+    p.inventory.forEach(function(item, idx){
+      var btn = document.createElement('button');
+      btn.style.cssText = 'font-size:10px; padding:3px 6px; cursor:pointer; background:var(--surface-0); border:1px solid #555; border-radius:3px;';
+      btn.textContent = item.type === 'pocion' ? '🧪HP' : (item.type === 'pocionMax' ? '🛡️Max' : '🗡️ATK');
+      btn.addEventListener('click', function(){ useItem(idx); });
+      inv.appendChild(btn);
+    });
+    if(inv.children.length === 0) inv.innerHTML = '<span style="color:#888;">Vacío</span>';
+
+    drawCanvas();
+  }
+
+  function drawCanvas(){
+    resizeCanvas();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = colors.floor;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    var p = state.player;
+    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
+
+    for (var y=0; y<SIZE; y++){
+      for (var x=0; x<SIZE; x++){
+        var dist = Math.abs(x - p.x) + Math.abs(y - p.y);
+        var inVision = !state.isDarkFloor || (dist <= visionRange);
+        var isExplored = state.explored[y][x];
+
+        var t = state.grid[y][x];
+        if (t === TILE.WALL){
+          ctx.fillStyle = isExplored ? colors.wallExplored : colors.wall;
+          ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+        } else if (t === TILE.FLOOR){
+          ctx.fillStyle = colors.floor;
+          ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+        } else if (t === TILE.STAIRS){
+          ctx.fillStyle = colors.stairsBg;
+          ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+          drawGlyph(x,y,'>', colors.stairs);
+        }
+        if (!inVision && state.isDarkFloor) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+        }
+      }
+    }
+
+    state.items.forEach(function(it){
+      var dist = Math.abs(it.x - p.x) + Math.abs(it.y - p.y);
+      if (state.isDarkFloor && dist > visionRange && !state.explored[it.y][it.x]) return;
+      var symbol = it.type === 'pocion' ? '🧪' : (it.type === 'pocionMax' ? '🛡️' : (it.type === 'espada' ? '🗡️' : (it.type === 'llave' ? '🗝️' : '📦')));
+      drawGlyph(it.x, it.y, symbol, '#000');
+    });
+
+    state.enemies.forEach(function(e){
+      if (e.hp <= 0) return;
+      var dist = Math.abs(e.x - p.x) + Math.abs(e.y - p.y);
+      if (state.isDarkFloor && dist > visionRange && !state.explored[e.y][e.x]) return;
+      var symbol = e.type === 'Golem de Piedra' ? '🗿' : (e.type === 'Esqueleto' ? '💀' : '🦇');
+      drawGlyph(e.x, e.y, symbol, '#000');
+    });
+
+    if (state.merchant){
+      drawGlyph(state.merchant.x, state.merchant.y, '🏪', '#000');
+    }
+
+    drawGlyph(p.x, p.y, '🧙', '#000');
+  }
+
+  function drawGlyph(gx,gy,ch,color){
+    ctx.fillStyle = color;
+    ctx.font = Math.round(CELL*0.5) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ch, gx*CELL+CELL/2, gy*CELL+CELL/2+1);
+  }
+
+  // Controles
+  function handleActionUp(){
+    if (state.shopOpen) {
+      var len = getShopOptions().length;
+      selectedShopIndex = (selectedShopIndex - 1 + len) % len;
+      renderShopList();
+    } else { tryMove(0, -1); }
+  }
+  function handleActionDown(){
+    if (state.shopOpen) {
+      var len = getShopOptions().length;
+      selectedShopIndex = (selectedShopIndex + 1) % len;
+      renderShopList();
+    } else { tryMove(0, 1); }
+  }
+  function handleActionLeft(){ if (!state.shopOpen) tryMove(-1, 0); }
+  function handleActionRight(){ if (!state.shopOpen) tryMove(1, 0); }
+  function handleActionConfirmA(){
+    if (state.shopOpen) buySelectedShopItem();
+  }
+
+  document.getElementById('btn-up').addEventListener('click', handleActionUp);
+  document.getElementById('btn-down').addEventListener('click', handleActionDown);
+  document.getElementById('btn-left').addEventListener('click', handleActionLeft);
+  document.getElementById('btn-right').addEventListener('click', handleActionRight);
+  document.getElementById('btn-action-a').addEventListener('click', handleActionConfirmA);
+
+  document.getElementById('btn-restart').addEventListener('click', resetGame);
+  document.getElementById('overlay-btn').addEventListener('click', function(){ hideOverlay(); resetGame(); });
+
+  window.addEventListener('resize', function(){ if(state) drawCanvas(); });
+
+  resetGame();
+})();
+</script>
+</body>
+</html>
