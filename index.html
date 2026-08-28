@@ -34,7 +34,7 @@
     height: 100vh;
     background: var(--surface-0);
     border-radius: 0;
-    padding: 6px 8px;
+    padding: 4px 6px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -61,7 +61,7 @@
     font-size: 12px;
     font-weight: 600;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 3px;
+    padding-bottom: 2px;
   }
   .stat-group {
     display: flex;
@@ -73,20 +73,22 @@
   .canvas-wrapper {
     position: relative;
     width: 100%;
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 0;
   }
   canvas {
+    width: 100%;
     max-width: 100%;
-    max-height: 100%;
+    max-height: 44vh;
     aspect-ratio: 1;
     display: block;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--surface-0);
+    object-fit: contain;
   }
   .panels-row {
     display: flex;
@@ -97,9 +99,9 @@
     background: var(--surface-1);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 5px 6px;
+    padding: 4px 6px;
     font-size: 11px;
-    max-height: 75px;
+    max-height: 60px;
     overflow-y: auto;
   }
   .panel-title {
@@ -115,22 +117,22 @@
     background: var(--surface-1);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 4px;
+    padding: 2px;
   }
   .dpad {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
   }
   .dpad button {
     position: absolute;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     background: var(--surface-0);
     border: 2px solid #555;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: var(--text-primary);
     display: flex;
@@ -142,16 +144,16 @@
   .dpad button:active {
     background: var(--surface-2);
   }
-  #btn-up { top: 0; left: 33px; }
-  #btn-left { top: 33px; left: 0; }
-  #btn-right { top: 33px; left: 66px; }
-  #btn-down { top: 66px; left: 33px; }
+  #btn-up { top: 0; left: 30px; }
+  #btn-left { top: 30px; left: 0; }
+  #btn-right { top: 30px; left: 60px; }
+  #btn-down { top: 60px; left: 30px; }
   .dpad-center {
     position: absolute;
-    top: 33px;
-    left: 33px;
-    width: 34px;
-    height: 34px;
+    top: 30px;
+    left: 30px;
+    width: 30px;
+    height: 30px;
     background: var(--surface-2);
     border-radius: 4px;
   }
@@ -162,13 +164,13 @@
     gap: 2px;
   }
   #btn-action-a {
-    width: 55px;
-    height: 55px;
+    width: 50px;
+    height: 50px;
     background: #185FA5;
     border: 3px solid #B5D4F4;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: #fff;
     display: flex;
@@ -184,7 +186,7 @@
     font-size: 11px;
     color: #d93838;
     font-weight: bold;
-    height: 20px;
+    height: 18px;
     overflow: hidden;
     line-height: 1.2;
     text-align: center;
@@ -217,24 +219,28 @@
       <span>ATK <b id="atk-out">2</b></span>
       <span>Oro <b id="gold-out">0</b></span>
     </div>
-    <button id="btn-restart" style="font-size:10px; padding:3px 6px; cursor:pointer; border:1px solid #555; border-radius:4px; background:var(--surface-0); font-weight:600;">Reiniciar</button>
+    <button id="btn-restart" style="font-size:10px; padding:2px 5px; cursor:pointer; border:1px solid #555; border-radius:4px; background:var(--surface-0); font-weight:600;">Reiniciar</button>
   </div>
 
+  <!-- Barra de Vida -->
   <div style="display:flex; gap:6px; align-items:center;">
-    <div style="flex:1; height:5px; background:var(--surface-1); border-radius:3px; overflow:hidden; border:1px solid var(--border);">
+    <div style="flex:1; height:4px; background:var(--surface-1); border-radius:3px; overflow:hidden; border:1px solid var(--border);">
       <div id="hp-bar" style="height:100%; width:100%; background:var(--fill-danger); transition:width 0.15s;"></div>
     </div>
   </div>
 
+  <!-- Canvas del Juego -->
   <div class="canvas-wrapper">
     <canvas id="game-canvas" tabindex="0"></canvas>
     
+    <!-- Overlay Derrota -->
     <div id="overlay" class="overlay-screen">
       <p id="overlay-title" style="font-size:18px; font-weight:bold; margin:0;"></p>
       <p id="overlay-sub" style="font-size:12px; color:#aaa; margin:0;"></p>
       <button id="overlay-btn" style="margin-top:6px; padding:6px 14px; cursor:pointer; background:#fff; border:none; border-radius:4px; font-weight:bold;">Reintentar</button>
     </div>
 
+    <!-- Overlay Tienda -->
     <div id="shop-overlay" class="overlay-screen" style="background:rgba(10,10,10,0.95);">
       <p style="font-size:15px; font-weight:bold; margin:0; color:#FAC775;">🏪 Tienda del Mercader</p>
       <p style="font-size:10px; color:#ccc; margin:0;">Usa la cruceta para moverte y el botón <b>A</b> para comprar:</p>
@@ -243,6 +249,7 @@
     </div>
   </div>
 
+  <!-- Paneles Inferiores (Monstruos e Inventario) -->
   <div class="panels-row">
     <div class="panel">
       <div class="panel-title">Monstruos</div>
@@ -254,6 +261,7 @@
     </div>
   </div>
 
+  <!-- Controles Táctiles Estilo Consola Retro -->
   <div class="retro-controls">
     <div class="dpad">
       <button id="btn-up">▲</button>
@@ -281,8 +289,8 @@
 
   function resizeCanvas(){
     var containerW = canvas.parentElement.clientWidth;
-    var containerH = canvas.parentElement.clientHeight;
-    var side = Math.min(containerW, containerH);
+    var maxH = window.innerHeight * 0.44;
+    var side = Math.min(containerW, maxH);
     canvas.width = side * DPR;
     canvas.height = side * DPR;
     CELL = canvas.width / SIZE;
@@ -432,7 +440,6 @@
       state.explored.push(row);
     }
 
-    // A partir del piso 5 en adelante, hay probabilidad de oscuridad absoluta
     state.isDarkFloor = (floor >= 5) && (Math.random() < 0.35);
 
     var occupied = [];
@@ -501,7 +508,6 @@
     state.floor = floor;
     updateExplored();
 
-    // Mostrar aviso explícito y forzado en el log si es piso oscuro
     if (state.isDarkFloor) {
       pushLog('⚠️ ¡PISO DE OSCURIDAD ABSOLUTA!');
     }
@@ -617,7 +623,6 @@
     if (nx === state.stairs.x && ny === state.stairs.y){
       var nextFloor = state.floor + 1;
       newFloor(nextFloor);
-      // Si el nuevo piso es oscuro, aseguramos que el log mantenga el aviso importante
       if (!state.isDarkFloor) {
         pushLog('Bajaste al piso ' + nextFloor + '.');
       }
@@ -892,7 +897,6 @@
     ctx.fillText(ch, gx*CELL+CELL/2, gy*CELL+CELL/2+1);
   }
 
-  // Controles
   function handleActionUp(){
     if (state.shopOpen) {
       var len = getShopOptions().length;
