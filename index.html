@@ -232,7 +232,7 @@
   <!-- Canvas del Juego -->
   <div class="canvas-wrapper">
     <canvas id="game-canvas" tabindex="0"></canvas>
-    
+
     <!-- Overlay Derrota -->
     <div id="overlay" class="overlay-screen">
       <p id="overlay-title" style="font-size:18px; font-weight:bold; margin:0;"></p>
@@ -243,7 +243,7 @@
     <!-- Overlay Tienda -->
     <div id="shop-overlay" class="overlay-screen" style="background:rgba(10,10,10,0.95);">
       <p style="font-size:15px; font-weight:bold; margin:0; color:#FAC775;">🏪 Tienda del Mercader</p>
-      <p style="font-size:10px; color:#ccc; margin:0;">Usa la cruceta para moverte y el botón <b>A</b> para comprar:</p>
+      <p style="font-size:10px; color:#ccc; margin:0;">Usa la cruceta para moverte y el botón <b>A</b> para comprar. Los objetos van a tu inventario.</p>
       <div id="shop-items" style="display:flex; flex-direction:column; gap:4px; width:100%; max-height:160px; overflow-y:auto; padding-right:2px; margin-top:4px;"></div>
       <button id="shop-close-btn" style="margin-top:4px; font-size:11px; padding:6px 12px; background:#FAC775; color:#111; font-weight:bold; border:none; border-radius:4px;">Cerrar tienda</button>
     </div>
@@ -432,7 +432,7 @@
   function newFloor(floor){
     var d = makeDungeon(floor);
     state.grid = d.grid;
-    
+
     state.explored = [];
     for (var y=0; y<SIZE; y++){
       var row = [];
@@ -446,7 +446,7 @@
     var playerPos = (state.player && state.player.x !== undefined && d.grid[state.player.y][state.player.x] !== TILE.WALL)
       ? {x: state.player.x, y: state.player.y}
       : freeTile(d.grid, []);
-    
+
     occupied.push(playerPos);
 
     var stairs = freeTile(d.grid, occupied);
@@ -541,7 +541,7 @@
 
   function inBounds(x,y){ return x>=0 && y>=0 && x<SIZE && y<SIZE; }
   function isWalkable(x,y){ return inBounds(x,y) && state.grid[y][x] !== TILE.WALL; }
-  
+
   function enemyAt(x,y){
     for (var i=0; i<state.enemies.length; i++){
       var e = state.enemies[i];
@@ -569,7 +569,7 @@
         var goldDrop = target.type === 'Golem de Piedra' ? 5 : 1;
         p.gold += goldDrop;
         pushLog('¡Derrotaste un ' + target.type + ' (+' + goldDrop + ' oro)!');
-        
+
         if (target.type === 'Golem de Piedra' && !state.merchant) {
           spawnMerchant();
         }
@@ -641,20 +641,23 @@
     render();
   }
 
+  // Todas las opciones de la tienda ahora solo EMPAQUETAN el objeto al inventario.
+  // Ningun efecto (curar, teletransportar, revelar, escudo) se dispara al comprar.
+  // El efecto real vive en useItem(), y se dispara cuando el jugador lo usa desde el panel.
   var selectedShopIndex = 0;
   function getShopOptions(){
     return [
       { name: '🧪 Poción Menor (+2 HP)', cost: 5, action: function(){ state.player.inventory.push({type:'pocion', value:2}); } },
       { name: '🛡️ Escudo Vitalidad (+2 MaxHP)', cost: 10, action: function(){ state.player.inventory.push({type:'pocionMax', value:2}); } },
       { name: '🗡️ Daga Afilada (+2 ATK)', cost: 8, action: function(){ state.player.inventory.push({type:'espada', value:2}); } },
-      { name: '📜 Revelar Cofres', cost: 12, action: function(){ revealItemType('cofre'); } },
-      { name: '📜 Revelar Llaves', cost: 12, action: function(){ revealItemType('llave'); } },
-      { name: '📜 Revelar Monstruos', cost: 15, action: function(){ revealMonsters(); } },
-      { name: '📜 Revelar HP + ATQ', cost: 20, action: function(){ revealItemType('pocion'); revealItemType('espada'); } },
-      { name: '📜 Pergamino Visión (+1)', cost: 20, action: function(){ state.player.visionBonus += 1; updateExplored(); } },
-      { name: '🌀 Orbe Teletransporte (2 pisos)', cost: 20, action: function(){ newFloor(state.floor + 2); pushLog('¡Salto cuántico de 2 pisos!'); } },
-      { name: '🌀 Orbe Teletransporte Pro (4 pisos)', cost: 30, action: function(){ newFloor(state.floor + 4); pushLog('¡Salto dimensional de 4 pisos!'); } },
-      { name: '➕ Escudo Protector (100 pasos)', cost: 50, action: function(){ state.player.shieldSteps = 100; pushLog('¡Escudo protector activado por 100 pasos!'); } }
+      { name: '📜 Pergamino: Revelar Cofres', cost: 12, action: function(){ state.player.inventory.push({type:'pergaminoCofres', value:1}); } },
+      { name: '📜 Pergamino: Revelar Llaves', cost: 12, action: function(){ state.player.inventory.push({type:'pergaminoLlaves', value:1}); } },
+      { name: '📜 Pergamino: Revelar Monstruos', cost: 15, action: function(){ state.player.inventory.push({type:'pergaminoMonstruos', value:1}); } },
+      { name: '📜 Pergamino: Revelar HP + ATQ', cost: 20, action: function(){ state.player.inventory.push({type:'pergaminoHpAtk', value:1}); } },
+      { name: '📜 Pergamino de Visión (+1)', cost: 20, action: function(){ state.player.inventory.push({type:'pergaminoVision', value:1}); } },
+      { name: '🌀 Orbe Teletransporte (2 pisos)', cost: 20, action: function(){ state.player.inventory.push({type:'orbe', value:2}); } },
+      { name: '🌀 Orbe Teletransporte Pro (4 pisos)', cost: 30, action: function(){ state.player.inventory.push({type:'orbe', value:4}); } },
+      { name: '➕ Escudo Protector (100 pasos)', cost: 50, action: function(){ state.player.inventory.push({type:'escudo', value:100}); } }
     ];
   }
 
@@ -703,7 +706,7 @@
     if (state.player.gold >= opt.cost){
       state.player.gold -= opt.cost;
       opt.action();
-      pushLog('Compraste: ' + opt.name);
+      pushLog('Compraste: ' + opt.name + ' (guardado en inventario)');
       renderShopList();
       render();
     } else {
@@ -749,6 +752,9 @@
     render();
   }
 
+  // useItem() es ahora el UNICO lugar donde se disparan los efectos de los objetos
+  // comprados en la tienda (ademas de los recogidos del piso). Todo objeto en el
+  // inventario, sin excepcion, espera aca hasta que el jugador lo toca.
   function useItem(idx){
     if (state.over || state.shopOpen) return;
     var p = state.player;
@@ -768,6 +774,33 @@
       p.inventory.splice(idx,1);
       p.atk += item.value;
       pushLog('Equipaste Daga (+2 ATK).');
+    } else if (item.type === 'orbe'){
+      p.inventory.splice(idx,1);
+      var destino = state.floor + item.value;
+      newFloor(destino);
+      pushLog('¡Orbe activado! Saltaste ' + item.value + ' pisos.');
+    } else if (item.type === 'escudo'){
+      p.inventory.splice(idx,1);
+      p.shieldSteps = item.value;
+      pushLog('¡Escudo protector activado por ' + item.value + ' pasos!');
+    } else if (item.type === 'pergaminoCofres'){
+      p.inventory.splice(idx,1);
+      revealItemType('cofre');
+    } else if (item.type === 'pergaminoLlaves'){
+      p.inventory.splice(idx,1);
+      revealItemType('llave');
+    } else if (item.type === 'pergaminoMonstruos'){
+      p.inventory.splice(idx,1);
+      revealMonsters();
+    } else if (item.type === 'pergaminoHpAtk'){
+      p.inventory.splice(idx,1);
+      revealItemType('pocion');
+      revealItemType('espada');
+    } else if (item.type === 'pergaminoVision'){
+      p.inventory.splice(idx,1);
+      p.visionBonus += 1;
+      updateExplored();
+      pushLog('Tu radio de visión aumentó permanentemente.');
     }
     render();
   }
@@ -779,13 +812,27 @@
   }
   function hideOverlay(){ document.getElementById('overlay').style.display = 'none'; }
 
+  // Etiqueta corta e ícono para cada tipo de objeto del inventario.
+  var ITEM_DISPLAY = {
+    pocion:            { icon: '🧪', label: 'HP' },
+    pocionMax:         { icon: '🛡️', label: 'Max' },
+    espada:            { icon: '🗡️', label: 'ATK' },
+    orbe:              { icon: '🌀', label: 'Orbe' },
+    escudo:            { icon: '➕', label: 'Escudo' },
+    pergaminoCofres:   { icon: '📜', label: 'Cofres' },
+    pergaminoLlaves:   { icon: '📜', label: 'Llaves' },
+    pergaminoMonstruos:{ icon: '📜', label: 'Monst.' },
+    pergaminoHpAtk:    { icon: '📜', label: 'HP/ATK' },
+    pergaminoVision:   { icon: '📜', label: 'Visión' }
+  };
+
   function render(){
     refreshColors();
     document.getElementById('floor-out').textContent = state.floor;
     document.getElementById('hp-stat-out').textContent = Math.max(0, state.player.hp) + '/' + state.player.maxHp;
     document.getElementById('atk-out').textContent = state.player.atk;
     document.getElementById('gold-out').textContent = state.player.gold;
-    
+
     var p = state.player;
     var pct = Math.max(0, Math.round((p.hp/p.maxHp)*100));
     document.getElementById('hp-bar').style.width = pct + '%';
@@ -816,9 +863,11 @@
       inv.appendChild(s);
     }
     p.inventory.forEach(function(item, idx){
+      var disp = ITEM_DISPLAY[item.type] || { icon: '❔', label: item.type };
       var btn = document.createElement('button');
       btn.style.cssText = 'font-size:10px; padding:3px 6px; cursor:pointer; background:var(--surface-0); border:1px solid #555; border-radius:3px;';
-      btn.textContent = item.type === 'pocion' ? '🧪HP' : (item.type === 'pocionMax' ? '🛡️Max' : '🗡️ATK');
+      btn.textContent = disp.icon + disp.label;
+      btn.title = 'Usar ' + disp.label;
       btn.addEventListener('click', function(){ useItem(idx); });
       inv.appendChild(btn);
     });
@@ -874,7 +923,7 @@
       if (state.isDarkFloor && dist > visionRange && !state.explored[e.y][e.x]) return;
       var symbol = e.type === 'Golem de Piedra' ? '🗿' : (e.type === 'Esqueleto' ? '💀' : '🦇');
       drawGlyph(e.x, e.y, symbol, '#000');
-      
+
       ctx.fillStyle = '#d93838';
       ctx.font = 'bold ' + Math.round(CELL * 0.22) + 'px sans-serif';
       ctx.textAlign = 'center';
