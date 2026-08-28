@@ -286,24 +286,6 @@
     colors.stairsBg = '#9FE1CB';
     colors.player = '#185FA5';
     colors.playerBg = '#B5D4F4';
-    colors.murcielago = '#533261';
-    colors.murcielagoBg = '#E5D4ED';
-    colors.esqueleto = '#791F1F';
-    colors.esqueletoBg = '#F7C1C1';
-    colors.golem = '#3d3d3d';
-    colors.golemBg = '#d1d1d1';
-    colors.mercader = '#7D4F50';
-    colors.mercaderBg = '#F2D6D7';
-    colors.espada = '#854F0B';
-    colors.espadaBg = '#FAC775';
-    colors.pocion = '#993556';
-    colors.pocionBg = '#F4C0D1';
-    colors.pocionMax = '#0F6E56';
-    colors.pocionMaxBg = '#C2E8DF';
-    colors.llave = '#BA7506';
-    colors.llaveBg = '#FEE8C8';
-    colors.cofre = '#633806';
-    colors.cofreBg = '#EED2B0';
   }
 
   var state;
@@ -462,6 +444,7 @@
       var bossHp = 10 + Math.floor(floor * 2);
       var bossAtk = calculateEnemyAtk(8, 12, floor);
       state.enemies.push({ x: pos.x, y: pos.y, hp: bossHp, maxHp: bossHp, atk: bossAtk, type: 'Golem de Piedra' });
+      spawnMerchant();
     } else {
       var enemyCount = 3 + Math.min(4, floor);
       for (var i=0; i<enemyCount; i++){
@@ -498,7 +481,7 @@
     }
 
     if (!state.player){
-      state.player = { x: playerPos.x, y: playerPos.y, hp: 10, maxHp: 10, atk: 2, llaves: 0, gold: 0, visionBonus: 0, shieldSteps: 0, inventory: [] };
+      state.player = { x: playerPos.x, y: playerPos.y, hp: 10, maxHp: 10, atk: 2, llaves: 0, gold: 0, visionBonus: 0, inventory: [] };
     } else {
       state.player.x = playerPos.x;
       state.player.y = playerPos.y;
@@ -510,7 +493,7 @@
   function updateExplored(){
     if (!state.player) return;
     var p = state.player;
-    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
+    var visionRange = state.isDarkFloor ? p.visionBonus : 99;
     for (var y=0; y<SIZE; y++){
       for (var x=0; x<SIZE; x++){
         if (!state.isDarkFloor || Math.abs(x - p.x) + Math.abs(y - p.y) <= visionRange) {
@@ -566,7 +549,7 @@
         
         var allDead = true;
         state.enemies.forEach(function(en){ if(en.hp > 0) allDead = false; });
-        if (allDead && state.floor % 5 === 0) spawnMerchant();
+        if (allDead && !state.merchant) spawnMerchant();
       } else {
         pushLog('Atacas al ' + target.type + ' (' + target.hp + '/' + target.maxHp + ' HP).');
       }
@@ -632,10 +615,10 @@
   var selectedShopIndex = 0;
   function getShopOptions(){
     return [
-      { name: '🧪 Poción (+2 HP)', cost: 5, action: function(){ state.player.inventory.push({type:'pocion', value:2}); } },
-      { name: '🛡️ Escudo (+2 MaxHP)', cost: 10, action: function(){ state.player.inventory.push({type:'pocionMax', value:2}); } },
-      { name: '🗡️ Daga (+2 ATK)', cost: 8, action: function(){ state.player.inventory.push({type:'espada', value:2}); } },
-      { name: '📜 Pergamino de Visión', cost: 15, action: function(){ state.player.visionBonus += 1; updateExplored(); } }
+      { name: '🧪 Poción (+2 HP)', cost: 4, action: function(){ state.player.inventory.push({type:'pocion', value:2}); } },
+      { name: '🛡️ Escudo (+2 MaxHP)', cost: 8, action: function(){ state.player.inventory.push({type:'pocionMax', value:2}); } },
+      { name: '🗡️ Daga (+2 ATK)', cost: 7, action: function(){ state.player.inventory.push({type:'espada', value:2}); } },
+      { name: '📜 Pergamino Visión (+1)', cost: 10, action: function(){ state.player.visionBonus += 1; updateExplored(); } }
     ];
   }
 
@@ -787,7 +770,7 @@
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
     var p = state.player;
-    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
+    var visionRange = state.isDarkFloor ? p.visionBonus : 99;
 
     for (var y=0; y<SIZE; y++){
       for (var x=0; x<SIZE; x++){
@@ -803,12 +786,12 @@
           ctx.fillStyle = colors.floor;
           ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
         } else if (t === TILE.STAIRS){
-          ctx.fillStyle = colors.stairsBg;
+          ctx.fillStyle = '#9FE1CB';
           ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
-          drawGlyph(x,y,'>', colors.stairs);
+          drawGlyph(x,y,'>', '#0F6E56');
         }
         if (!inVision && state.isDarkFloor) {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
           ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
         }
       }
@@ -827,6 +810,13 @@
       if (state.isDarkFloor && dist > visionRange && !state.explored[e.y][e.x]) return;
       var symbol = e.type === 'Golem de Piedra' ? '🗿' : (e.type === 'Esqueleto' ? '💀' : '🦇');
       drawGlyph(e.x, e.y, symbol, '#000');
+      
+      // Mostrar la vida arriba de cada monstruo (ej. 14/14)
+      ctx.fillStyle = '#d93838';
+      ctx.font = 'bold ' + Math.round(CELL * 0.22) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(e.hp + '/' + e.maxHp, e.x * CELL + CELL / 2, e.y * CELL + 2);
     });
 
     if (state.merchant){
