@@ -17,41 +17,39 @@
     --fill-danger: #d93838;
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  body {
+  html, body {
     background-color: #121212;
     color: var(--text-primary);
     font-family: var(--font-sans);
     margin: 0;
     padding: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     -webkit-user-select: none;
     user-select: none;
-    overflow: hidden;
   }
   .game-container {
     width: 100vw;
     height: 100vh;
-    max-width: none;
-    max-height: none;
     background: var(--surface-0);
     border-radius: 0;
-    padding: 8px;
-    box-shadow: none;
+    padding: 6px 8px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-sizing: border-box;
   }
-  @media (min-width: 500px) {
+  @media (min-width: 600px) {
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     .game-container {
-      max-width: 450px;
-      height: auto;
-      max-height: 98vh;
+      width: 450px;
+      height: 95vh;
+      max-height: 850px;
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
@@ -60,10 +58,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 4px;
+    padding-bottom: 3px;
   }
   .stat-group {
     display: flex;
@@ -79,7 +77,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    max-height: 52vh;
+    min-height: 0;
   }
   canvas {
     max-width: 100%;
@@ -99,9 +97,9 @@
     background: var(--surface-1);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 6px;
+    padding: 5px 6px;
     font-size: 11px;
-    max-height: 85px;
+    max-height: 75px;
     overflow-y: auto;
   }
   .panel-title {
@@ -117,22 +115,22 @@
     background: var(--surface-1);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 6px;
+    padding: 4px;
   }
   .dpad {
     position: relative;
-    width: 110px;
-    height: 110px;
+    width: 100px;
+    height: 100px;
   }
   .dpad button {
     position: absolute;
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     background: var(--surface-0);
     border: 2px solid #555;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     color: var(--text-primary);
     display: flex;
@@ -144,16 +142,16 @@
   .dpad button:active {
     background: var(--surface-2);
   }
-  #btn-up { top: 0; left: 36px; }
-  #btn-left { top: 36px; left: 0; }
-  #btn-right { top: 36px; left: 72px; }
-  #btn-down { top: 72px; left: 36px; }
+  #btn-up { top: 0; left: 33px; }
+  #btn-left { top: 33px; left: 0; }
+  #btn-right { top: 33px; left: 66px; }
+  #btn-down { top: 66px; left: 33px; }
   .dpad-center {
     position: absolute;
-    top: 36px;
-    left: 36px;
-    width: 36px;
-    height: 36px;
+    top: 33px;
+    left: 33px;
+    width: 34px;
+    height: 34px;
     background: var(--surface-2);
     border-radius: 4px;
   }
@@ -164,13 +162,13 @@
     gap: 2px;
   }
   #btn-action-a {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     background: #185FA5;
     border: 3px solid #B5D4F4;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     color: #fff;
     display: flex;
@@ -184,8 +182,9 @@
   }
   #log {
     font-size: 11px;
-    color: var(--text-secondary);
-    height: 22px;
+    color: #d93838;
+    font-weight: bold;
+    height: 20px;
     overflow: hidden;
     line-height: 1.2;
     text-align: center;
@@ -211,7 +210,7 @@
 
 <div class="game-container">
   <div class="header-stats">
-    <span style="font-size:14px; font-weight:800;">Mazmorra</span>
+    <span style="font-size:13px; font-weight:800;">Mazmorra</span>
     <div class="stat-group">
       <span>Piso <b id="floor-out">1</b></span>
       <span>HP <b id="hp-stat-out">10/10</b></span>
@@ -222,7 +221,7 @@
   </div>
 
   <div style="display:flex; gap:6px; align-items:center;">
-    <div style="flex:1; height:6px; background:var(--surface-1); border-radius:3px; overflow:hidden; border:1px solid var(--border);">
+    <div style="flex:1; height:5px; background:var(--surface-1); border-radius:3px; overflow:hidden; border:1px solid var(--border);">
       <div id="hp-bar" style="height:100%; width:100%; background:var(--fill-danger); transition:width 0.15s;"></div>
     </div>
   </div>
@@ -433,8 +432,8 @@
       state.explored.push(row);
     }
 
-    state.isDarkFloor = (floor > 2) && (Math.random() < 0.35);
-    if (state.isDarkFloor) pushLog('⚠️ ¡Piso de Oscuridad Absoluta!');
+    // A partir del piso 5 en adelante, hay probabilidad de oscuridad absoluta
+    state.isDarkFloor = (floor >= 5) && (Math.random() < 0.35);
 
     var occupied = [];
     var playerPos = (state.player && state.player.x !== undefined && d.grid[state.player.y][state.player.x] !== TILE.WALL)
@@ -501,12 +500,17 @@
     }
     state.floor = floor;
     updateExplored();
+
+    // Mostrar aviso explícito y forzado en el log si es piso oscuro
+    if (state.isDarkFloor) {
+      pushLog('⚠️ ¡PISO DE OSCURIDAD ABSOLUTA!');
+    }
   }
 
   function updateExplored(){
     if (!state.player) return;
     var p = state.player;
-    var visionRange = state.isDarkFloor ? p.visionBonus : 99;
+    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
     for (var y=0; y<SIZE; y++){
       for (var x=0; x<SIZE; x++){
         if (!state.isDarkFloor || Math.abs(x - p.x) + Math.abs(y - p.y) <= visionRange) {
@@ -613,7 +617,10 @@
     if (nx === state.stairs.x && ny === state.stairs.y){
       var nextFloor = state.floor + 1;
       newFloor(nextFloor);
-      pushLog('Bajaste al piso ' + nextFloor + '.');
+      // Si el nuevo piso es oscuro, aseguramos que el log mantenga el aviso importante
+      if (!state.isDarkFloor) {
+        pushLog('Bajaste al piso ' + nextFloor + '.');
+      }
       render();
       return;
     }
@@ -822,7 +829,7 @@
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
     var p = state.player;
-    var visionRange = state.isDarkFloor ? p.visionBonus : 99;
+    var visionRange = state.isDarkFloor ? (1 + p.visionBonus) : 99;
 
     for (var y=0; y<SIZE; y++){
       for (var x=0; x<SIZE; x++){
@@ -863,7 +870,6 @@
       var symbol = e.type === 'Golem de Piedra' ? '🗿' : (e.type === 'Esqueleto' ? '💀' : '🦇');
       drawGlyph(e.x, e.y, symbol, '#000');
       
-      // Vida arriba de cada monstruo
       ctx.fillStyle = '#d93838';
       ctx.font = 'bold ' + Math.round(CELL * 0.22) + 'px sans-serif';
       ctx.textAlign = 'center';
